@@ -1,16 +1,11 @@
 (function(angular){
   'use strict';
 
-  var angularChartistModule = angular.module('angular-chartist', []);
+  var angularChartistModule = angular.module('angularChartist', []);
 
   var AngularChartistCtrl = function () {
-    function AngularChartistCtrl($scope, $element) {
+    function AngularChartistCtrlClass($scope, $element) {
       'ngInject';
-
-      var _this = this;
-
-      _classCallCheck(this, AngularChartistCtrl);
-
       this.data = $scope.data;
       this.chartType = $scope.chartType;
 
@@ -22,77 +17,71 @@
 
       this.renderChart();
 
-      $scope.$watch(function () {
-        return {
-          data: $scope.data,
-          chartType: $scope.chartType,
-          chartOptions: $scope.chartOptions() || null,
-          responsiveOptions: $scope.responsiveOptions() || null,
-          events: $scope.events() || {}
-        };
-      }, this.update.bind(this), true);
+      $scope.$watch(
+        () => {
+          return {
+            data: $scope.data,
+            chartType: $scope.chartType,
+            chartOptions: $scope.chartOptions() || null,
+            responsiveOptions: $scope.responsiveOptions() || null,
+            events: $scope.events() || {}
+          };
+        },
+        this.update.bind(this),
+        true
+      );
 
-      $scope.$on('$destroy', function () {
-        if (_this.chart) {
-          _this.chart.detach();
+      $scope.$on('$destroy', () => {
+        if (this.chart) {
+          this.chart.detach();
         }
       });
     }
 
-    _createClass(AngularChartistCtrl, [{
-      key: 'bindEvents',
-      value: function bindEvents() {
-        var _this2 = this;
+    AngularChartistCtrlClass.prototype.bindEvents = function() {
+      Object.keys(this.events).forEach(eventName => {
+        this.chart.on(eventName, this.events[eventName]);
+      });
+    }
 
-        Object.keys(this.events).forEach(function (eventName) {
-          _this2.chart.on(eventName, _this2.events[eventName]);
-        });
+    AngularChartistCtrlClass.prototype.unbindEvents = function(events) {
+      Object.keys(events).forEach(eventName => {
+        this.chart.off(eventName, events[eventName]);
+      });
+    }
+
+    AngularChartistCtrlClass.prototype.renderChart = function() {
+      // ensure that the chart does not get created without data
+      if (this.data) {
+        this.chart = Chartist[this.chartType](this.element, this.data, this.options, this.responsiveOptions);
+
+        this.bindEvents();
+
+        return this.chart;
       }
-    }, {
-      key: 'unbindEvents',
-      value: function unbindEvents(events) {
-        var _this3 = this;
+    }
 
-        Object.keys(events).forEach(function (eventName) {
-          _this3.chart.off(eventName, events[eventName]);
-        });
-      }
-    }, {
-      key: 'renderChart',
-      value: function renderChart() {
-        // ensure that the chart does not get created without data
-        if (this.data) {
-          this.chart = Chartist[this.chartType](this.element, this.data, this.options, this.responsiveOptions);
+    AngularChartistCtrlClass.prototype.update = function(newConfig, oldConfig) {
+      // Update controller with new configuration
+      this.chartType = newConfig.chartType;
+      this.data = newConfig.data;
+      this.options = newConfig.chartOptions;
+      this.responsiveOptions = newConfig.responsiveOptions;
+      this.events = newConfig.events;
 
+      // If chart type changed we need to recreate whole chart, otherwise we can update
+      if (!this.chart || newConfig.chartType !== oldConfig.chartType) {
+        this.renderChart();
+      } else {
+        if (!angular.equals(newConfig.events, oldConfig.events)) {
+          this.unbindEvents(oldConfig.events);
           this.bindEvents();
-
-          return this.chart;
         }
+        this.chart.update(this.data, this.options);
       }
-    }, {
-      key: 'update',
-      value: function update(newConfig, oldConfig) {
-        // Update controller with new configuration
-        this.chartType = newConfig.chartType;
-        this.data = newConfig.data;
-        this.options = newConfig.chartOptions;
-        this.responsiveOptions = newConfig.responsiveOptions;
-        this.events = newConfig.events;
+    }
 
-        // If chart type changed we need to recreate whole chart, otherwise we can update
-        if (!this.chart || newConfig.chartType !== oldConfig.chartType) {
-          this.renderChart();
-        } else {
-          if (!angular.equals(newConfig.events, oldConfig.events)) {
-            this.unbindEvents(oldConfig.events);
-            this.bindEvents();
-          }
-          this.chart.update(this.data, this.options);
-        }
-      }
-    }]);
-
-    return AngularChartistCtrl;
+    return AngularChartistCtrlClass;
   }();
 
   angularChartistModule.controller('AngularChartistCtrl', AngularChartistCtrl).directive('chartist', function () {
