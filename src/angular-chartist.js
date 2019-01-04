@@ -6,6 +6,8 @@
   function AngularChartistCtrl($scope, $element) {
     'ngInject';
 
+    var self = this;
+
     this.data = $scope.data;
     this.chartType = $scope.chartType;
 
@@ -18,7 +20,7 @@
     this.renderChart();
 
     $scope.$watch(
-      () => {
+      function() {
         return {
           data: $scope.data,
           chartType: $scope.chartType,
@@ -31,22 +33,26 @@
       true
     );
 
-    $scope.$on('$destroy', () => {
-      if (this.chart) {
-        this.chart.detach();
+    $scope.$on('$destroy', function() {
+      if (self.chart) {
+        self.chart.detach();
       }
     });
   }
 
   AngularChartistCtrl.prototype.bindEvents = function() {
-    Object.keys(this.events).forEach(eventName => {
-      this.chart.on(eventName, this.events[eventName]);
+    var self = this;
+
+    Object.keys(self.events).forEach(function(eventName) {
+      self.chart.on(eventName, self.events[eventName]);
     });
   }
 
   AngularChartistCtrl.prototype.unbindEvents = function(events) {
-    Object.keys(events).forEach(eventName => {
-      this.chart.off(eventName, events[eventName]);
+    var self = this;
+
+    Object.keys(events).forEach(function(eventName) {
+      self.chart.off(eventName, events[eventName]);
     });
   }
 
